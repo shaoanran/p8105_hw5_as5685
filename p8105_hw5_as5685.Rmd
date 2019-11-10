@@ -1,6 +1,8 @@
 ---
 title: "p8105_hw5_as5685"
 output: github_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -56,49 +58,73 @@ new_dataset = map_df( iris_with_missing, mean_function)
 #### Dataframe with all file names
 
 ```{r}
-dataframe = list.files("./data")
+dataframe = tibble(
+  
+  file = list.files("./data")
+
+  )
+
 ```
 
 #### Tidy dataframe for all files. 
 
-```{r}
-data_function = function(z){
+```{r, message=FALSE}
+data_function = function(filename){
     
-  read_csv(file = str_c("./data/", z))
+  read_csv(file = str_c("./data/", filename))
   
 }
 
-data_list = map(dataframe, data_function)
+dataframe = 
+  dataframe %>% 
+  mutate(data = map(dataframe$file, data_function))
+```
 
-all_data = map_df(dataframe, data_function) %>% 
-mutate(
-  Participant = dataframe 
-) %>% 
-select(Participant, everything()) %>% 
-separate(Participant, into = c("arm", "id"), sep = "_") %>% 
-mutate(
-   arm = recode(arm, `con` = "control", `exp` = "experiment"),
-   id = str_replace(id, ".csv$", ""),
-) 
+
+```{r}
+unnest_data = 
+dataframe %>% 
+  unnest(data)
 
 tidy_dataset = 
   pivot_longer(
-    all_data,
+    unnest_data,
     week_1:week_8,
     names_to = "week",
     values_to = "data"
   ) %>% 
+  
 mutate(
-  week = str_replace(week, "week_", "")
-)
+  file  = str_replace(file, ".csv$", "")
+)  %>% 
 
+  rename( participant = file)
 ```
 
+#### spaghetti plot 
+```{r}
 
+spaghetti_plot =
+  tidy_dataset %>% 
+  separate(participant, into = c("arm","id"), sep = "_", remove =  FALSE ) %>% 
+  mutate(
+    arm = recode(arm, `con` = "control", `exp` = "experiment"),
+  ) %>% 
+  ggplot(aes(x = week, y = data, color = arm, group = participant)) +
+  geom_line() +
+  labs(
+    lengent = "control"
+  )
 
+spaghetti_plot
+```
 
+* The data in experiment group generally are higher than control group for each week. with time, the data for experiment increases, but decrease for control group. 
 
+## Problem 3
+```{r}
 
+```
 
 
 
