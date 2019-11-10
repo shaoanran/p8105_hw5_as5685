@@ -4,5 +4,101 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 6,
+  out.width = "90%"
+)
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
+
+## load in data
+
+```{r}
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+```
+
+## Problem 1
+#### Filling missing values 
+```{r}
+mean_function = function(x){
+    
+    if (is.numeric(x)) {
+      x = replace_na(x,mean(x[!is.na(x)]))
+    }else if (is.character(x)) {
+      x = replace_na(x, "virginica")
+    }
+}
+  
+new_dataset = map_df( iris_with_missing, mean_function)
+```
+
+
+## Problem 2
+#### Dataframe with all file names
+
+```{r}
+dataframe = list.files("./data")
+```
+
+#### Tidy dataframe for all files. 
+
+```{r}
+data_function = function(z){
+    
+  read_csv(file = str_c("./data/", z))
+  
+}
+
+data_list = map(dataframe, data_function)
+
+all_data = map_df(dataframe, data_function) %>% 
+mutate(
+  Participant = dataframe 
+) %>% 
+select(Participant, everything()) %>% 
+separate(Participant, into = c("arm", "id"), sep = "_") %>% 
+mutate(
+   arm = recode(arm, `con` = "control", `exp` = "experiment"),
+   id = str_replace(id, ".csv$", ""),
+) 
+
+tidy_dataset = 
+  pivot_longer(
+    all_data,
+    week_1:week_8,
+    names_to = "week",
+    values_to = "data"
+  ) %>% 
+mutate(
+  week = str_replace(week, "week_", "")
+)
+
+```
+
+
+
+
+
+
+
+
+
