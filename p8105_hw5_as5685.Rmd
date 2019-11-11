@@ -176,7 +176,7 @@ Repeat the above for β1={1,2,3,4,5,6}, and complete the following:
 sim_betas = 
 tibble( betas = c(1,2,3,4,5,6)) %>% 
 mutate(
-  beta_lists = map(.x = betas, ~rerun(100, sim_regression( beta1 = .x))),
+  beta_lists = map(.x = betas, ~rerun(10000, sim_regression( beta1 = .x))),
   beta_dfs = map(beta_lists, bind_rows)
   ) %>% 
   select(-beta_lists) %>%
@@ -216,7 +216,7 @@ plot_power_effect
 * The overall trend for the effect size and power is that power is increasing(the proportion of rejecting null hypothesis is becomes higher) with the increase of effect size(beta values).  
 
 
-#### Plot for true betas and estimated betas as well asn estimated betas with p-values less than 0.05. 
+#### Plot for true betas and corresponding means of estimated betas as well asn estimated betas with p-values less than 0.05. 
 ```{r}
 plot_beta = 
   sim_betas %>% 
@@ -225,7 +225,13 @@ plot_beta =
     estimatedbeta_mean = mean(beta1_hat)
   ) %>% 
   ggplot(aes(x = betas, y = estimatedbeta_mean)) + 
-  geom_point() + geom_smooth(method = "lm", se = FALSE)
+  geom_point() + geom_smooth(method = "lm", se = FALSE) +  
+  labs(
+    title = "Association between true betas and  corresponding estimated betas means",
+    x = "True Betas",
+    y = "Means of Estimated Betas"
+  )
+  
 plot_beta
 
 
@@ -238,14 +244,18 @@ plot_rejectbeta =
     meanbeta = mean(beta1_hat)
   ) %>% 
   ggplot(aes(x = betas, y = meanbeta)) + 
-  geom_point() + geom_smooth(method = "lm", se = FALSE)
+  geom_point() + geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Association between true betas and means of estimated beta for rejecting Ho",
+    x = "True Betas",
+    y = "Mean of Estimated betas"
+  )
 
 plot_rejectbeta
 
 ```
 
-
-* The sample average of beta across tests for which the null is rejected is not approximately equal to the true value of beta, since when p-value is greater than 0.05, the estimated betas are more close to zero. Therefore, if we exclude the p-values that are not rejecting the hypothesis, the mean of betas are  
+* The sample average of beta across tests for which the null is rejected is not approximately equal to the true value of beta, since when p-value is greater than 0.05, the estimated betas are more close to zero. Therefore, if we exclude the p-values that are not rejecting the hypothesis, the mean of betas will be increased. 
 
 
 
